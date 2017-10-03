@@ -63,7 +63,7 @@
        [components/tooltip (i18n/label :t/wrong-password)])]))
 
 
-(defview signing-buttons []
+(defview signing-buttons [in-progress?]
   (letsubs [sign-enabled? [:wallet.send/sign-password-enabled?]]
     [react/view wallet.styles/buttons-container
      [react/touchable-highlight {:on-press #(re-frame/dispatch [:wallet/discard-transaction])}
@@ -72,6 +72,7 @@
      [react/view components.styles/flex]
      [react/touchable-highlight {:on-press #(re-frame/dispatch [:wallet/sign-transaction])}
       [react/view (wallet.styles/button-container sign-enabled?)
+       (when in-progress? [react/activity-indicator {:animating? true}])
        [components/button-text (i18n/label :t/transactions-sign-transaction)]
        [vi/icon :icons/forward {:color :white :container-style wallet.styles/forward-icon-container}]]]]))
 
@@ -93,7 +94,8 @@
             amount-error [:get-in [:wallet/send-transaction :amount-error]]
             signing?     [:get-in [:wallet/send-transaction :signing?]]
             to-address   [:get-in [:wallet/send-transaction :to-address]]
-            to-name      [:get-in [:wallet/send-transaction :to-name]]]
+            to-name      [:get-in [:wallet/send-transaction :to-name]]
+            in-progress? [:get-in [:wallet/send-transaction :in-progress?]]]
     [react/keyboard-avoiding-view wallet.styles/wallet-modal-container
      [react/view components.styles/flex
       [status-bar/status-bar {:type :wallet}]
@@ -118,7 +120,8 @@
           [components/choose-currency wallet.styles/choose-currency]]]]]
       [components/separator]
       (if signing?
-        [signing-buttons]
+        [signing-buttons in-progress?]
         [sign-buttons])
       (when signing?
-        [sign-panel])]]))
+        [sign-panel])]
+     (when in-progress? [react/view send.styles/processing-view])]))

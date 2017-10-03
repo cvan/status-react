@@ -65,8 +65,10 @@
   ::transaction-completed
   (fn [{db :db} [_ {:keys [id response]}]]
     (let [{:keys [hash error]} response]
-      (when-not (and error (string? error) (not (string/blank? error)))
+      (if (and error (string? error) (not (string/blank? error)))
+        {:db (assoc-in db [:wallet/send-transaction :in-progress?] false)}
         {:db       (-> db
+                       (assoc-in [:wallet/send-transaction :in-progress?] false)
                        (assoc-in [:wallet/send-transaction :transaction-id] nil)
                        (assoc :wrong-password? false))
          :dispatch [:navigate-to :wallet-transaction-sent]}))))
@@ -104,9 +106,11 @@
         {::accept-transaction {:id           transaction-id
                                :password     password
                                :on-completed on-transactions-completed}}
-        {:db                (update-in db [:wallet/send-transaction]
-                                       #(assoc % :waiting-signal? true
-                                                 :later? later?))
+        {:db                (-> db
+                                (update-in [:wallet/send-transaction]
+                                           #(assoc % :waiting-signal? true
+                                                   :later? later?))
+                                (assoc-in [:wallet/send-transaction :in-progress?] true))
          ::send-transaction {:web3  web3
                              :from  (get-in accounts [current-account-id :address])
                              :to    (:to-address send-transaction)
@@ -118,7 +122,8 @@
     (let [{:keys [transaction-id]} send-transaction]
       (merge {:db (-> db
                       (update-in [:wallet/send-transaction]
-                                 #(assoc % :signing? false :transaction-id nil))
+                                 #(assoc % :signing? false
+                                         :transaction-id nil))
                       (assoc :wrong-password? false))}
              (when transaction-id
                ;;TODO (andrey) use ::discard-transaction fx instead
