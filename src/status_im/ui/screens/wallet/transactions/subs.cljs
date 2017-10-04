@@ -3,7 +3,8 @@
             [status-im.i18n :as i18n]
             [status-im.utils.datetime :as datetime]
             [status-im.utils.money :as money]
-            [status-im.utils.transactions :as transactions]))
+            [status-im.utils.transactions :as transactions]
+            [status-im.utils.hex :as utils.hex]))
 
 (reg-sub :wallet.transactions/transactions-loading?
   :<- [:wallet]
@@ -33,8 +34,12 @@
              :symbol         "ETH"
              :hash           message-id)))
 
+(reg-sub :wallet/unsigned-transactions
+  (fn [db]
+    (vals (get-in db [:wallet :transactions-unsigned]))))
+
 (reg-sub :wallet.transactions/unsigned-transactions
-  :<- [:transactions]
+  :<- [:wallet/unsigned-transactions]
   (fn [transactions]
     (reduce (fn [acc {:keys [message-id] :as transaction}]
               (assoc acc message-id (format-unsigned-transaction transaction)))
@@ -133,3 +138,19 @@
       (if (>= confirmations max-confirmations)
         100
         (* 100 (/ confirmations max-confirmations))))))
+
+(reg-sub
+  :contacts-by-address
+  (fn [db]
+    (into {} (map (fn [[_ {:keys [address] :as contact}]]
+                    (when address
+                      [address contact]))
+                  (:contacts/contacts db)))))
+
+(reg-sub
+  :contact-by-address
+  :<- [:contacts-by-address]
+  (fn [contacts [_ address]]
+    (let [address' (when address
+                     (utils.hex/normalize-hex address))]
+      (contacts address'))))
