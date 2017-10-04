@@ -383,10 +383,10 @@
    :view-transaction-details              "View Transaction Details"
    :transaction-description               "If you want to be sure you transaction will not be compromised wait until it gets at least 10 block confirmations"
    :transaction-sent                      "Transaction Sent"
-   :transaction-moved-text                "The transaction has ben successfully moved to “Unsigned”"
+   :transaction-moved-text                "The transaction has been successfully moved to “Unsigned”"
    :transaction-moved-title               "Transaction Moved"
    :sign-later-title                      "Sign Transaction Later?"
-   :sign-later-text                       "You will be able to sign in in the transaction history"
+   :sign-later-text                       "You will be able to sign in the transaction history"
    :not-applicable                        "Not applicable for unsigned transactions"
 
    ;; Wallet Send
